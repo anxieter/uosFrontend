@@ -15,7 +15,7 @@ const App = ({ Component, pageProps }: AppProps) => {
     return (
         <>
             <Head>
-                <title> BetterStory</title>
+                <title>UOS</title>
             </Head>
             <div style={{ height:"100%" }}>
                 <Component {...pageProps} />

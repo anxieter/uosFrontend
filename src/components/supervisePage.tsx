@@ -9,6 +9,7 @@ import {
   Spin,
   Table,
   Flex,
+  Space,
 } from "antd";
 import { useState } from "react";
 const { Header, Footer, Sider, Content } = Layout;
@@ -28,6 +29,8 @@ const SupervisePage = () => {
   const [init, setInit] = useState(false); // 是否已经初始化
   const [currentStep, setCurrentStep] = useState(0); // 当前执行的步骤
   const [count, setCount] = useState(0);
+  const [url, setUrl] = useState("http://183.172.91.74:2020"); // 后端url
+  const [urlState, setUrlState] = useState(false); // 后端url是否可用
   const [sendButtonDisabled, setSendButtonDisabled] = useState(false); // 是否可以发送介入操作
   const [needFix, setNeedFix] = useState(false); // 是否需要介入
   const [tableData, setTableData] = useState<
@@ -97,7 +100,8 @@ const SupervisePage = () => {
     // },
   ]); // 用于存储表格数据, 包括 步骤类型 步骤描述 步骤参数 执行状态
   useEffect(() => {
-    const socket = io("http://127.0.0.1:2020", { transports: ["websocket"] });
+    const socket = io(url, { transports: ["websocket"],
+withCredentials: true });
     socket.on("steps_info", (data: any) => {
       const steps = data.steps;
       for (let i = 0; i < steps.length; i++) {
@@ -113,15 +117,17 @@ const SupervisePage = () => {
     });
     socket.on("connect", () => {
       console.log("connect:: ");
+      setUrlState(true);
     });
     socket.on("disconnect", () => {
       console.log("disconnect:: ");
+      setUrlState(false);
     });
     // Cleanup function
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [url]);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
@@ -136,7 +142,7 @@ const SupervisePage = () => {
       formdata.append("index", currentStep.toString());
       formdata.append("message", inputValue);
       // TODO: link with backend
-      fetch(`${BACKEND_URL}/receive_fix`, {
+      fetch(`${url}/receive_fix`, {
         method: "POST",
         body: formdata,
         mode: "cors",
@@ -148,7 +154,7 @@ const SupervisePage = () => {
       setInputValue("");
       const formdata = new FormData();
       formdata.append("original_text", inputValue);
-      fetch(`${BACKEND_URL}/start`, {
+      fetch(`${url}/start`, {
         method: "POST",
         body: formdata,
         mode: "cors",
@@ -168,6 +174,19 @@ const SupervisePage = () => {
     <Layout
       style={{ display: "flex", flexDirection: "column", height: "100%" }}
     >
+    <Header style={{background:"#eeeeee", justifyContent:"center",alignItems:"center", display:"flex"}}>
+        <Space>
+            <div>后端地址:</div>
+            <Input
+                value={url}
+                onChange={(e) => {
+                    setUrl(e.target.value);
+                }}
+                placeholder="http://1.2.3.4:2020"
+                style={{ width: "300px", marginRight: "10px", height: "30px" }}></Input>
+            <div>{urlState?"已连接":"连接断开"}</div>
+        </Space>
+    </Header>
       <Content style={{ width: "calc(100% - 100px)" }}>
         <Flex
           vertical={false}
